@@ -1,0 +1,8 @@
+Artificial intelligence is the field of building computer systems
+that can perform tasks that normally require human intelligence.
+
+Machine learning is a branch of artificial intelligence that allows
+computers to learn patterns from data.
+
+AI agents can understand goals, use tools, make decisions, and perform
+actions on behalf of users.
