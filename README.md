@@ -127,7 +127,7 @@ ai-executive-assistant-agent/
 Clone the repository:
 
 ```bash
-git clone <YOUR-REPOSITORY-URL>
+git clone https://github.com/alialgharsi/ai-executive-assistant-agent.git
 cd ai-executive-assistant-agent
 ```
 
