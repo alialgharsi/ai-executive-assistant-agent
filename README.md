@@ -6,6 +6,11 @@ This project demonstrates how an AI agent can combine an LLM with external tools
 
 ## Features
 
+- Google Calendar integration using OAuth 2.0
+- Read upcoming calendar events
+- Create real calendar events
+- Human-in-the-loop approval before sensitive actions
+- Automatic retry handling for temporary Google Calendar connection errors
 - Conversational AI powered by Google Gemini
 - Automatic tool calling
 - Task management
@@ -95,6 +100,8 @@ The current implementation uses `all-MiniLM-L6-v2` through Sentence Transformers
 
 ## Technologies
 
+- Google Calendar API
+- Google OAuth 2.0
 - Python
 - Google Gemini API
 - Google Gen AI Python SDK
