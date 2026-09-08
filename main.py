@@ -1,6 +1,48 @@
-from agent import ask_ai
-from tools import clear_all_tasks
+from agent import ask_ai, propose_calendar_event
 from calendar_tool import create_calendar_event
+from tools import clear_all_tasks
+
+
+def confirm(prompt="Do you want to continue? (yes/no): "):
+    return input(prompt).strip().lower() == "yes"
+
+
+def handle_calendar_request(user_input):
+    proposal = propose_calendar_event(user_input)
+
+    if proposal["status"] == "not_calendar":
+        return False
+
+    if proposal["status"] in {"error", "missing_details"}:
+        print(f"\nAssistant: {proposal['message']}\n")
+        return True
+
+    print("\nAssistant: Proposed Google Calendar action")
+    print(f"Title: {proposal['summary']}")
+    print(f"Start: {proposal['start_datetime']}")
+    print(f"End: {proposal['end_datetime']}")
+    print(f"Timezone: {proposal['timezone_name']}")
+    print("\nThis will create a real event in your Google Calendar.")
+
+    if not confirm("Create this event? (yes/no): "):
+        print("\nAssistant: Action cancelled.\n")
+        return True
+
+    result = create_calendar_event(
+        summary=proposal["summary"],
+        start_datetime=proposal["start_datetime"],
+        end_datetime=proposal["end_datetime"],
+        timezone_name=proposal["timezone_name"],
+    )
+
+    print("\nAssistant:")
+    if result["status"] == "success":
+        print("Calendar event created successfully.")
+        print(result["html_link"])
+    else:
+        print(result["message"])
+    print()
+    return True
 
 
 def main():
@@ -10,78 +52,46 @@ def main():
     print("Type 'exit' to close the assistant.\n")
 
     while True:
-        user_input = input("You: ")
+        user_input = input("You: ").strip()
 
-        # Exit
+        if not user_input:
+            continue
+
         if user_input.lower() == "exit":
             print("\nAssistant: Goodbye!")
             break
 
-        # Sensitive action: Delete all tasks
-        if user_input.lower() in [
+        if user_input.lower() in {
             "delete all tasks",
             "clear all tasks",
-            "remove all tasks"
-        ]:
-            print(
-                "\nAssistant: This action will permanently "
-                "delete all saved tasks."
-            )
+            "remove all tasks",
+        }:
+            print("\nAssistant: This action will permanently delete all saved tasks.")
 
-            approval = input(
-                "Do you want to continue? (yes/no): "
-            )
-
-            if approval.lower() == "yes":
+            if confirm():
                 result = clear_all_tasks()
-
-                print("\nAssistant:")
-                print(result["message"])
-
+                print(f"\nAssistant: {result['message']}\n")
             else:
-                print("\nAssistant: Action cancelled.")
-
-            print()
+                print("\nAssistant: Action cancelled.\n")
             continue
 
-        # Sensitive action: Create Google Calendar event
-        if user_input.lower() == "create test calendar event":
-            print(
-                "\nAssistant: This action will create "
-                "a real event in your Google Calendar."
-            )
+        calendar_keywords = (
+            "calendar",
+            "schedule",
+            "meeting",
+            "appointment",
+            "event",
+            "موعد",
+            "اجتماع",
+            "التقويم",
+        )
 
-            approval = input(
-                "Do you want to continue? (yes/no): "
-            )
+        if any(keyword in user_input.lower() for keyword in calendar_keywords):
+            if handle_calendar_request(user_input):
+                continue
 
-            if approval.lower() == "yes":
-                result = create_calendar_event(
-                    summary="AI Agent Test Event",
-                    start_datetime="2026-09-08T18:00:00",
-                    end_datetime="2026-09-08T19:00:00",
-                    timezone_name="Asia/Riyadh"
-                )
-
-                print("\nAssistant:")
-
-                if result["status"] == "success":
-                    print("Calendar event created successfully.")
-                    print(result["html_link"])
-                else:
-                    print(result["message"])
-            else:
-                print("\nAssistant: Action cancelled.")
-
-            print()
-            continue
-
-        # Normal AI conversation
         response = ask_ai(user_input)
-
-        print("\nAssistant:")
-        print(response)
-        print()
+        print(f"\nAssistant:\n{response}\n")
 
 
 if __name__ == "__main__":
