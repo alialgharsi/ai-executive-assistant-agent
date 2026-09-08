@@ -9,3 +9,5 @@ venv/
 
 .vscode/
 .idea/
+
+tasks.json
