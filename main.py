@@ -1,6 +1,7 @@
 from agent import ask_ai, propose_calendar_event
 from calendar_tool import create_calendar_event
 from tools import clear_all_tasks
+from workflow import workflow
 
 
 def confirm(prompt="Do you want to continue? (yes/no): "):
@@ -24,6 +25,7 @@ def handle_calendar_request(user_input):
     print(f"Timezone: {proposal['timezone_name']}")
     print("\nThis will create a real event in your Google Calendar.")
 
+    # Human-in-the-loop approval
     if not confirm("Create this event? (yes/no): "):
         print("\nAssistant: Action cancelled.\n")
         return True
@@ -36,11 +38,13 @@ def handle_calendar_request(user_input):
     )
 
     print("\nAssistant:")
+
     if result["status"] == "success":
         print("Calendar event created successfully.")
         print(result["html_link"])
     else:
         print(result["message"])
+
     print()
     return True
 
@@ -48,6 +52,7 @@ def handle_calendar_request(user_input):
 def main():
     print("=" * 50)
     print("AI Executive Assistant Agent")
+    print("Powered by Gemini + LangGraph")
     print("=" * 50)
     print("Type 'exit' to close the assistant.\n")
 
@@ -61,37 +66,45 @@ def main():
             print("\nAssistant: Goodbye!")
             break
 
+        # Destructive actions still require explicit approval
         if user_input.lower() in {
             "delete all tasks",
             "clear all tasks",
             "remove all tasks",
         }:
-            print("\nAssistant: This action will permanently delete all saved tasks.")
+            print(
+                "\nAssistant: "
+                "This action will permanently delete all saved tasks."
+            )
 
             if confirm():
                 result = clear_all_tasks()
                 print(f"\nAssistant: {result['message']}\n")
             else:
                 print("\nAssistant: Action cancelled.\n")
+
             continue
 
-        calendar_keywords = (
-            "calendar",
-            "schedule",
-            "meeting",
-            "appointment",
-            "event",
-            "موعد",
-            "اجتماع",
-            "التقويم",
+        # LangGraph decides which workflow should handle the request
+        graph_result = workflow.invoke(
+            {
+                "user_input": user_input,
+                "route": "",
+            }
         )
 
-        if any(keyword in user_input.lower() for keyword in calendar_keywords):
+        route = graph_result["route"]
+
+        if route == "calendar":
             if handle_calendar_request(user_input):
                 continue
 
-        response = ask_ai(user_input)
-        print(f"\nAssistant:\n{response}\n")
+        if route == "assistant":
+            response = ask_ai(user_input)
+            print(f"\nAssistant:\n{response}\n")
+            continue
+
+        print("\nAssistant: I could not determine how to handle this request.\n")
 
 
 if __name__ == "__main__":
